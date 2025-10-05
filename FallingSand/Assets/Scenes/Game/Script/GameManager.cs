@@ -20,7 +20,12 @@ public class GameManager : Singleton<GameManager>
     // Quản lý màu sắc
     private List<ColorType> availableColors = new List<ColorType>();
     private int currentMilestonesPassed = 0;
-
+    public override void Awake()
+    {
+        base.Awake();
+        QualitySettings.vSyncCount = 0;       // Tắt VSync
+        Application.targetFrameRate = 60;     // Ép chạy 60 FPS
+    }
     void Start()
     {
         LoadColorState();

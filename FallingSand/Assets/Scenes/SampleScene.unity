@@ -10618,7 +10618,7 @@ MonoBehaviour:
   gridWidth: 90
   gridHeight: 100
   cellSize: 1
-  simulationStepsPerFrame: 1
+  simulationStepsPerFrame: 2
   sandMaterial: {fileID: 2100000, guid: c92020b1cd2f7094bbf244bb6ccfbf8d, type: 2}
 --- !u!4 &2058217910
 Transform:
