@@ -23,8 +23,8 @@ public class UILoss : UICanvas
     private void UpdateScoreTexts()
     {
         var uiCore = FindObjectOfType<UICore>();
-        int currentScore = uiCore != null ? uiCore.GetCurrentScore() : PlayerPrefs.GetInt("CurrentScore", 0);
-        int highScore = PlayerPrefs.GetInt("HighScore", 0);
+        int currentScore = uiCore != null ? uiCore.GetCurrentScore() : PlayerPrefs.GetInt("CS", 0);
+        int highScore = PlayerPrefs.GetInt("HS", 0);
 
         if (currentScoreText != null)
             currentScoreText.text =  FormatScore(currentScore);
@@ -53,7 +53,7 @@ public class UILoss : UICanvas
         if (uiCore != null)
         {
             uiCore.ResetScore();
-            PlayerPrefs.SetInt("CurrentScore", 0);
+            PlayerPrefs.SetInt("CS", 0);
         }
         
         // Reset milestones về mặc định
@@ -61,7 +61,7 @@ public class UILoss : UICanvas
         if (uiGameplay != null)
         {
             uiGameplay.scoreMilestones = new List<int> { 0, 25000, 100000, 200000, 300000, 500000, 700000 };
-            PlayerPrefs.SetString("CurrentMilestones", string.Join(",", uiGameplay.scoreMilestones));
+            PlayerPrefs.SetString("CM", string.Join(",", uiGameplay.scoreMilestones));
             uiGameplay.SetScore(0);
         }
         // Reset cát (nên gọi hàm reset ở SandSimulation)

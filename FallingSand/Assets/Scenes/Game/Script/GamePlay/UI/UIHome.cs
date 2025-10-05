@@ -42,9 +42,9 @@ public class UIHome : UICanvas
         }
         else
         {
-            int currentScore = PlayerPrefs.GetInt("CurrentScore", 0);
-
-            string milestonesStr = PlayerPrefs.GetString("CurrentMilestones", "");
+            int currentScore = PlayerPrefs.GetInt("CS", 0);
+    
+            string milestonesStr = PlayerPrefs.GetString("CM", "");
             List<int> milestones = new List<int>();
             if (!string.IsNullOrEmpty(milestonesStr))
             {

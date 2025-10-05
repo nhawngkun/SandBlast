@@ -39,11 +39,11 @@ public class UIPasue : UICanvas
         var uiGameplay = FindObjectOfType<UIgameplay>();
         if (uiCore != null)
         {
-            PlayerPrefs.SetInt("CurrentScore", uiCore.GetCurrentScore());
+            PlayerPrefs.SetInt("CS", uiCore.GetCurrentScore());
         }
         if (uiGameplay != null)
         {
-            PlayerPrefs.SetString("CurrentMilestones", string.Join(",", uiGameplay.scoreMilestones));
+            PlayerPrefs.SetString("CM", string.Join(",", uiGameplay.scoreMilestones));
         }
 
         UIManager.Instance.CloseUI<UIgameplay>(0);
@@ -66,7 +66,7 @@ public class UIPasue : UICanvas
         if (uiCore != null)
         {
             uiCore.ResetScore();
-            PlayerPrefs.SetInt("CurrentScore", 0);
+            PlayerPrefs.SetInt("CS", 0);
         }
 
         // Reset milestones về mặc định
@@ -74,7 +74,7 @@ public class UIPasue : UICanvas
         if (uiGameplay != null)
         {
             uiGameplay.scoreMilestones = new List<int> { 0, 25000, 100000, 200000, 300000,500000,700000 };
-            PlayerPrefs.SetString("CurrentMilestones", string.Join(",", uiGameplay.scoreMilestones));
+            PlayerPrefs.SetString("CM", string.Join(",", uiGameplay.scoreMilestones));
             uiGameplay.SetScore(0);
         }
 
@@ -119,7 +119,7 @@ public class UIPasue : UICanvas
         SoundManager.Instance.ToggleMusic(isSoundOn);
         SoundManager.Instance.ToggleSFX(isSoundOn);
 
-        PlayerPrefs.SetInt("SoundOn", isSoundOn ? 1 : 0);
+        PlayerPrefs.SetInt("SO", isSoundOn ? 1 : 0);
         PlayerPrefs.Save();
 
         if (soundOnObj != null) soundOnObj.SetActive(isSoundOn);
@@ -130,7 +130,7 @@ public class UIPasue : UICanvas
     public void ToggleVibration()
     {
         isVibrationOn = !isVibrationOn;
-        PlayerPrefs.SetInt("VibrationOn", isVibrationOn ? 1 : 0);
+        PlayerPrefs.SetInt("VO", isVibrationOn ? 1 : 0);
         PlayerPrefs.Save();
 
         if (vibrationOnObj != null) vibrationOnObj.SetActive(isVibrationOn);

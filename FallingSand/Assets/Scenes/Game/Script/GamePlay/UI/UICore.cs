@@ -16,14 +16,14 @@ public class UICore : UICanvas
     void Start()
     {
         // Load high score từ PlayerPrefs
-        highScore = PlayerPrefs.GetInt("HighScore", 0);
-        currentScore = PlayerPrefs.GetInt("CurrentScore", 0); // Khôi phục điểm hiện tại
+        highScore = PlayerPrefs.GetInt("HS", 0);
+        currentScore = PlayerPrefs.GetInt("CS", 0); // Khôi phục điểm hiện tại
         UpdateScoreUI();
     }
 
     void OnApplicationQuit()
     {
-        PlayerPrefs.SetInt("CurrentScore", currentScore); // Lưu điểm hiện tại khi thoát
+        PlayerPrefs.SetInt("CS", currentScore); // Lưu điểm hiện tại khi thoát
         PlayerPrefs.Save();
     }
 
@@ -34,7 +34,7 @@ public class UICore : UICanvas
         if (currentScore > highScore)
         {
             highScore = currentScore;
-            PlayerPrefs.SetInt("HighScore", highScore);
+            PlayerPrefs.SetInt("HS", highScore);
         }
         UpdateScoreUI();
 

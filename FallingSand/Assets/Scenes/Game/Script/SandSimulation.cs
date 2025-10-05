@@ -8,7 +8,7 @@ public class SandSimulation : MonoBehaviour
     public float cellSize = 5f;
 
     [Header("Simulation Speed")]
-    [Tooltip("Sá»‘ bÆ°á»›c mÃ´ phá»ng trong má»—i frame. TÄƒng giÃ¡ trá»‹ nÃ y Ä‘á»ƒ cÃ¡t rÆ¡i nhanh hÆ¡n.")]
+    [Tooltip("Số bước mô phỏng trong mỗi frame. Tăng giá trị này để cát rơi nhanh hơn.")]
     public int simulationStepsPerFrame = 5;
 
     [Header("Visual Settings")]
@@ -26,28 +26,33 @@ public class SandSimulation : MonoBehaviour
     private int[] triangles;
     private SandScoring sandScoring;
 
-    private int lossLineY; // Vá»‹ trÃ­ váº¡ch Ä‘á» (theo chá»‰ sá»‘ dÃ²ng)
-    private bool isGameOver = false; // Tráº¡ng thÃ¡i thua
+    private int lossLineY;
+    private bool isGameOver = false;
+    
+    // Đưa biến ra ngoài Update
+    private bool hadMovement = false;
+    private int simulationStep = 0;
+    
+    // Dirty flag để tối ưu rendering
+    private bool needsRender = false;
 
     void Start()
     {
         InitializeGrids();
         SetupMeshRendering();
         sandScoring = gameObject.AddComponent<SandScoring>();
-        LoadSandState(); // KhÃ´i phá»¥c tráº¡ng thÃ¡i cÃ¡t khi vÃ o game
+        LoadSandState(); // LoadSandState sẽ tự động set needsRender nếu có cát
 
-        // Váº¡ch Ä‘á» á»Ÿ 1/5 chiá»u cao há»™p cÃ¡t (tÃ­nh tá»« trÃªn xuá»‘ng)
         lossLineY = gridHeight / 5;
     }
 
     void OnApplicationQuit()
     {
-        SaveSandState(); // LÆ°u tráº¡ng thÃ¡i cÃ¡t khi thoÃ¡t game
+        SaveSandState();
     }
 
     public void SaveSandState()
     {
-        // LÆ°u grid
         System.Text.StringBuilder gridData = new System.Text.StringBuilder();
         for (int i = 0; i < gridWidth; i++)
         {
@@ -57,9 +62,8 @@ public class SandSimulation : MonoBehaviour
                 gridData.Append(",");
             }
         }
-        PlayerPrefs.SetString("SandGrid", gridData.ToString());
+        PlayerPrefs.SetString("SG", gridData.ToString());
 
-        // LÆ°u colorGrid (r,g,b,a)
         System.Text.StringBuilder colorData = new System.Text.StringBuilder();
         for (int i = 0; i < gridWidth; i++)
         {
@@ -69,14 +73,15 @@ public class SandSimulation : MonoBehaviour
                 colorData.AppendFormat("{0}|{1}|{2}|{3},", c.r, c.g, c.b, c.a);
             }
         }
-        PlayerPrefs.SetString("SandColorGrid", colorData.ToString());
+        PlayerPrefs.SetString("SCG", colorData.ToString());
         PlayerPrefs.Save();
     }
 
     public void LoadSandState()
     {
-        // KhÃ´i phá»¥c grid
-        string gridData = PlayerPrefs.GetString("SandGrid", "");
+        bool hasLoadedData = false;
+        
+        string gridData = PlayerPrefs.GetString("SG", "");
         if (!string.IsNullOrEmpty(gridData))
         {
             var gridArr = gridData.Split(',');
@@ -86,7 +91,10 @@ public class SandSimulation : MonoBehaviour
                 for (int j = 0; j < gridHeight; j++)
                 {
                     if (idx < gridArr.Length && float.TryParse(gridArr[idx], out float val))
+                    {
                         _grid[i, j] = val;
+                        if (val > 0) hasLoadedData = true; // Phát hiện có cát
+                    }
                     else
                         _grid[i, j] = 0f;
                     idx++;
@@ -94,8 +102,7 @@ public class SandSimulation : MonoBehaviour
             }
         }
 
-        // KhÃ´i phá»¥c colorGrid
-        string colorData = PlayerPrefs.GetString("SandColorGrid", "");
+        string colorData = PlayerPrefs.GetString("SCG", "");
         if (!string.IsNullOrEmpty(colorData))
         {
             var colorArr = colorData.Split(',');
@@ -128,6 +135,12 @@ public class SandSimulation : MonoBehaviour
                 }
             }
         }
+        
+        // Nếu đã load được cát, đánh dấu cần render
+        if (hasLoadedData)
+        {
+            needsRender = true;
+        }
     }
 
     void InitializeGrids()
@@ -159,37 +172,61 @@ public class SandSimulation : MonoBehaviour
 
     void Update()
     {
-        bool hadMovement = false;
-        for (int i = 0; i < simulationStepsPerFrame; i++)
+        
+        RunSimulation();
+
+        
+        CheckGameState();
+
+       
+        if (needsRender)
+        {
+            RenderGrid();
+            needsRender = false;
+        }
+    }
+
+  
+    void RunSimulation()
+    {
+        hadMovement = false;
+        simulationStep = 0;
+        
+    
+        while (simulationStep < simulationStepsPerFrame)
         {
             if (SimulateSand())
             {
                 hadMovement = true;
+                needsRender = true; // Đánh dấu cần render khi có movement
             }
+            simulationStep++;
         }
-
-       
-        if (!isGameOver && !hadMovement && CheckLossCondition())
-        {
-            isGameOver = true;
-            UIManager.Instance.OpenUI<UILoss>();
-            SoundManager.Instance.PlayVFXSound(3);
-            
-        }
-
-        if (!hadMovement && !isGameOver)
-        {
-            int score = sandScoring.CheckAndClearPaths();
-            if (score > 0)
-            {
-                Debug.Log($"Player scored: {score} points!");
-            }
-        }
-
-        RenderGrid();
     }
 
-   
+    // Tách logic kiểm tra game state
+    void CheckGameState()
+    {
+        if (!isGameOver && !hadMovement)
+        {
+            if (CheckLossCondition())
+            {
+                isGameOver = true;
+                UIManager.Instance.OpenUI<UILoss>();
+                SoundManager.Instance.PlayVFXSound(3);
+            }
+            else
+            {
+                int score = sandScoring.CheckAndClearPaths();
+                if (score > 0)
+                {
+                    Debug.Log($"Player scored: {score} points!");
+                    needsRender = true; // Cần render lại sau khi clear paths
+                }
+            }
+        }
+    }
+
     private bool CheckLossCondition()
     {
         for (int x = 0; x < gridWidth; x++)
@@ -200,7 +237,7 @@ public class SandSimulation : MonoBehaviour
         return false;
     }
 
-        public void AddSandBlock(BlockShape shape, Color color, Vector3 worldPosition)
+    public void AddSandBlock(BlockShape shape, Color color, Vector3 worldPosition)
     {
         Vector2 shapeCenter = GetShapeCenter(shape);
         int centerX = Mathf.RoundToInt(worldPosition.x / cellSize);
@@ -209,10 +246,8 @@ public class SandSimulation : MonoBehaviour
         int startX = centerX - Mathf.RoundToInt(shapeCenter.x);
         int startY = centerY - Mathf.RoundToInt(shapeCenter.y);
 
-        
         int finalY = FindValidDropPosition(shape, startX, startY);
 
-       
         int minYOffset = int.MaxValue;
         foreach (var cell in shape.cells)
         {
@@ -226,7 +261,6 @@ public class SandSimulation : MonoBehaviour
             yOffset = -minYOffset;
         }
 
-       
         foreach (var cellOffset in shape.cells)
         {
             int x = startX + cellOffset.x;
@@ -238,20 +272,18 @@ public class SandSimulation : MonoBehaviour
                 _colorGrid[x, y] = color;
             }
         }
+        
+        needsRender = true; // Đánh dấu cần render khi thêm block mới
     }
 
-    
     private int FindValidDropPosition(BlockShape shape, int startX, int startY)
     {
-       
         int testY = startY;
 
-      
         while (HasCollision(shape, startX, testY))
         {
-            testY--; 
+            testY--;
 
-           
             int highestCellY = testY;
             foreach (var cell in shape.cells)
             {
@@ -260,10 +292,8 @@ public class SandSimulation : MonoBehaviour
                     highestCellY = cellY;
             }
 
-            
             if (highestCellY < 0)
             {
-                
                 int minYOffset = 0;
                 foreach (var cell in shape.cells)
                 {
@@ -277,7 +307,6 @@ public class SandSimulation : MonoBehaviour
         return testY;
     }
 
-    
     private bool HasCollision(BlockShape shape, int startX, int startY)
     {
         foreach (var cellOffset in shape.cells)
@@ -285,15 +314,13 @@ public class SandSimulation : MonoBehaviour
             int x = startX + cellOffset.x;
             int y = startY + cellOffset.y;
 
-           
             if (WithinCols(x) && WithinRows(y))
             {
-                if (_grid[x, y] > 0) 
+                if (_grid[x, y] > 0)
                 {
                     return true;
                 }
             }
-            
             else if (!WithinCols(x) && WithinRows(y))
             {
                 return true;
@@ -318,17 +345,14 @@ public class SandSimulation : MonoBehaviour
         return new Vector2((minX + maxX) / 2f, (minY + maxY) / 2f);
     }
 
-    
     bool SimulateSand()
     {
         bool anyMovement = false;
         
         for (int j = gridHeight - 2; j >= 0; j--)
         {
-            // Quét xen kẽ để tạo hiệu ứng tự nhiên hơn
             if (j % 2 == 0)
             {
-                // Hàng chẵn: quét từ trái sang phải
                 for (int i = 0; i < gridWidth; i++)
                 {
                     if (UpdateSandParticle(i, j))
@@ -339,7 +363,6 @@ public class SandSimulation : MonoBehaviour
             }
             else
             {
-                // Hàng lẻ: quét từ phải sang trái
                 for (int i = gridWidth - 1; i >= 0; i--)
                 {
                     if (UpdateSandParticle(i, j))
@@ -352,22 +375,15 @@ public class SandSimulation : MonoBehaviour
         return anyMovement;
     }
 
-    /// <summary>
-    /// Tách logic cập nhật một hạt cát ra hầm riêng để tránh lặp code
-    /// Trả về true nếu hạt cát này đã di chuyển
-    /// </summary>
     bool UpdateSandParticle(int i, int j)
     {
-        // Chỉ xử lý nếu ô hiện tại có cát
         if (_grid[i, j] <= 0) return false;
 
-        // 1. Ưu tiên rơi thẳng xuống
         if (WithinRows(j + 1) && _grid[i, j + 1] == 0)
         {
             MoveSand(i, j, i, j + 1);
             return true;
         }
-        // 2. Nếu không thể rơi thẳng, xét rơi chéo
         else
         {
             bool canGoLeft = WithinCols(i - 1) && WithinRows(j + 1) && _grid[i - 1, j + 1] == 0;
@@ -375,25 +391,24 @@ public class SandSimulation : MonoBehaviour
 
             if (canGoLeft && canGoRight)
             {
-                // Nếu có thể đi cả 2 hướng, chọn ngẫu nhiên
                 if (Random.value < 0.5f)
                 {
-                    MoveSand(i, j, i - 1, j + 1); // Rơi chéo trái
+                    MoveSand(i, j, i - 1, j + 1);
                 }
                 else
                 {
-                    MoveSand(i, j, i + 1, j + 1); // Rơi chéo phải
+                    MoveSand(i, j, i + 1, j + 1);
                 }
                 return true;
             }
             else if (canGoLeft)
             {
-                MoveSand(i, j, i - 1, j + 1); // Chỉ có thể rơi chéo trái
+                MoveSand(i, j, i - 1, j + 1);
                 return true;
             }
             else if (canGoRight)
             {
-                MoveSand(i, j, i + 1, j + 1); // Chỉ có thể rơi chéo phải
+                MoveSand(i, j, i + 1, j + 1);
                 return true;
             }
         }
@@ -442,19 +457,26 @@ public class SandSimulation : MonoBehaviour
             }
         }
 
-        mesh.Clear();
+        // Chỉ update mesh khi có thay đổi, không clear toàn bộ
         if (quadCount > 0)
         {
+            mesh.Clear(false); // false = giữ layout, chỉ clear data
+            
             var finalVertices = new Vector3[quadCount * 4];
             var finalColors = new Color[quadCount * 4];
             var finalTriangles = new int[quadCount * 6];
             System.Array.Copy(vertices, finalVertices, quadCount * 4);
             System.Array.Copy(colors, finalColors, quadCount * 4);
             System.Array.Copy(triangles, finalTriangles, quadCount * 6);
+            
             mesh.vertices = finalVertices;
             mesh.colors = finalColors;
             mesh.triangles = finalTriangles;
             mesh.RecalculateBounds();
+        }
+        else
+        {
+            mesh.Clear(false); // Xóa mesh nếu không có cát
         }
     }
 
@@ -468,7 +490,8 @@ public class SandSimulation : MonoBehaviour
                 _colorGrid[i, j] = Color.clear;
             }
         }
-        isGameOver = false; // Reset trạng thái thua khi chơi lại
+        isGameOver = false;
+        needsRender = true; // Cần render lại sau khi reset
     }
 
     bool WithinCols(int i) => i >= 0 && i < gridWidth;

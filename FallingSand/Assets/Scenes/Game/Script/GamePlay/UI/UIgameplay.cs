@@ -22,13 +22,13 @@ public class UIgameplay : UICanvas
     void Start()
     {
         RestoreMilestones();
-        int savedScore = PlayerPrefs.GetInt("CurrentScore", 0);
+        int savedScore = PlayerPrefs.GetInt("CS", 0);
         SetScore(savedScore);
     }
 
     void OnApplicationQuit()
     {
-        PlayerPrefs.SetString("CurrentMilestones", string.Join(",", scoreMilestones));
+        PlayerPrefs.SetString("CM", string.Join(",", scoreMilestones));
         PlayerPrefs.Save();
     }
 
@@ -113,7 +113,7 @@ public class UIgameplay : UICanvas
 
     private void RestoreMilestones()
     {
-        string milestonesStr = PlayerPrefs.GetString("CurrentMilestones", "");
+        string milestonesStr = PlayerPrefs.GetString("CM", "");
         if (!string.IsNullOrEmpty(milestonesStr))
         {
             var arr = milestonesStr.Split(',');

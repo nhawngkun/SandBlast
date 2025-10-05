@@ -187,12 +187,12 @@ public class GameManager : Singleton<GameManager>
 
     private void SaveColorState()
     {
-        PlayerPrefs.SetInt("ColorMilestonesPassed", currentMilestonesPassed);
-        PlayerPrefs.SetInt("AvailableColorsCount", availableColors.Count);
+        PlayerPrefs.SetInt("CMP", currentMilestonesPassed);
+        PlayerPrefs.SetInt("ACC", availableColors.Count);
 
         for (int i = 0; i < availableColors.Count; i++)
         {
-            PlayerPrefs.SetInt($"AvailableColor_{i}", (int)availableColors[i]);
+            PlayerPrefs.SetInt($"AC_{i}", (int)availableColors[i]);
         }
 
         PlayerPrefs.Save();
@@ -200,15 +200,15 @@ public class GameManager : Singleton<GameManager>
 
     private void LoadColorState()
     {
-        currentMilestonesPassed = PlayerPrefs.GetInt("ColorMilestonesPassed", 0);
-        int count = PlayerPrefs.GetInt("AvailableColorsCount", 0);
+        currentMilestonesPassed = PlayerPrefs.GetInt("CMP", 0);
+        int count = PlayerPrefs.GetInt("ACC", 0);
 
         if (count > 0)
         {
             availableColors.Clear();
             for (int i = 0; i < count; i++)
             {
-                int colorInt = PlayerPrefs.GetInt($"AvailableColor_{i}", 0);
+                int colorInt = PlayerPrefs.GetInt($"AC_{i}", 0);
                 availableColors.Add((ColorType)colorInt);
             }
         }

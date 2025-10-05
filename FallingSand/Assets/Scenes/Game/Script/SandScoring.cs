@@ -90,17 +90,17 @@ public class SandScoring : MonoBehaviour
 
         if (allCellsToRemove.Count > 0)
         {
-            // Cáº­p nháº­t Ä‘iá»ƒm tá»•ng lÃªn UI chÃ­nh (náº¿u cÃ³)
+           
             var uiCore = FindObjectOfType<UICore>();
             if (uiCore != null)
             {
                 uiCore.AddScore(totalScore);
             }
             
-            // PhÃ¡t Ã¢m thanh Äƒn Ä‘iá»ƒm
+            
             SoundManager.Instance.PlayVFXSound(2);
             
-            // Báº¯t Ä‘áº§u hiá»‡u á»©ng xÃ³a cÃ¡t
+           
             StartCoroutine(PlayClearEffect(allCellsToRemove, totalScore));
         }
 
@@ -377,38 +377,6 @@ public class SandScoring : MonoBehaviour
         return allRegions;
     }
 
-    /// <summary>
-    /// Hiá»ƒn thá»‹ debug cho cÃ¡c vÃ¹ng káº¿t ná»‘i tÃ¬m Ä‘Æ°á»£c
-    /// </summary>
-    void OnDrawGizmos()
-    {
-        if (sandSimulation == null) return;
-
-        List<HashSet<Vector2Int>> regions = FindAllConnectedRegions();
-
-        Color[] debugColors = { Color.red, Color.blue, Color.green, Color.yellow, Color.magenta };
-
-        for (int regionIndex = 0; regionIndex < regions.Count; regionIndex++)
-        {
-            Gizmos.color = debugColors[regionIndex % debugColors.Length];
-            var region = regions[regionIndex];
-
-            // Váº½ táº¥t cáº£ cÃ¡c Ã´ trong vÃ¹ng káº¿t ná»‘i
-            foreach (var cell in region)
-            {
-                Vector3 center = new Vector3(cell.x * sandSimulation.cellSize + sandSimulation.cellSize / 2,
-                                           -cell.y * sandSimulation.cellSize - sandSimulation.cellSize / 2, -1);
-                Gizmos.DrawCube(center, Vector3.one * 3f);
-            }
-
-            // Váº½ viá»n xung quanh vÃ¹ng
-            Gizmos.color = Color.white;
-            foreach (var cell in region)
-            {
-                Vector3 center = new Vector3(cell.x * sandSimulation.cellSize + sandSimulation.cellSize / 2,
-                                           -cell.y * sandSimulation.cellSize - sandSimulation.cellSize / 2, -1);
-                Gizmos.DrawWireCube(center, Vector3.one * sandSimulation.cellSize);
-            }
-        }
-    }
+    
+    
 }
