@@ -11,12 +11,12 @@ public class SandScoring : MonoBehaviour
     public bool allowDiagonalMovement = true;
 
     [Header("Effect Settings")]
-    public float highlightDuration = 0.5f; // Thá»i gian sÃ¡ng lÃªn
-    public float highlightIntensity = 2f; // Äá»™ sÃ¡ng (nhÃ¢n vá»›i mÃ u gá»‘c)
-    public float fadeOutDuration = 0.3f; // Thá»i gian biáº¿n máº¥t
+    public float highlightDuration = 0.5f; // Thời gian sáng lên
+    public float highlightIntensity = 2f; // Độ sáng (nhân với màu gốc)
+    public float fadeOutDuration = 0.3f; // Thời gian biến mất
 
     private SandSimulation sandSimulation;
-    private bool isPlayingEffect = false; // NgÄƒn cháº·n nhiá»u hiá»‡u á»©ng cÃ¹ng lÃºc
+    private bool isPlayingEffect = false; // Ngăn chặn nhiều hiệu ứng cùng lúc
 
     void Start()
     {
@@ -25,15 +25,15 @@ public class SandScoring : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space)) // Test báº±ng phÃ­m Space
+        if (Input.GetKeyDown(KeyCode.Space)) // Test bằng phím Space
         {
             CheckAndClearPaths();
         }
     }
 
     /// <summary>
-    /// Kiá»ƒm tra vÃ  xÃ³a táº¥t cáº£ cÃ¡c Ä‘Æ°á»ng ná»‘i cÃ¡t cÃ¹ng mÃ u tá»« cá»™t Ä‘áº§u tiÃªn Ä‘áº¿n cá»™t cuá»‘i cÃ¹ng
-    /// CÃ¹ng vá»›i táº¥t cáº£ cÃ¡c háº¡t cÃ¹ng mÃ u liÃªn káº¿t
+    /// Kiểm tra và xóa tất cả các đường nối cát cùng màu từ cột đầu tiên đến cột cuối cùng
+    /// Cùng với tất cả các hạt cùng màu liên kết
     /// </summary>
     public int CheckAndClearPaths()
     {
@@ -43,7 +43,7 @@ public class SandScoring : MonoBehaviour
         HashSet<Vector2Int> allCellsToRemove = new HashSet<Vector2Int>();
         HashSet<Color> processedColors = new HashSet<Color>();
 
-        // Duyá»‡t qua táº¥t cáº£ cÃ¡c Ã´ á»Ÿ cá»™t Ä‘áº§u tiÃªn (x = 0)
+        // Duyệt qua tất cả các ô ở cột đầu tiên (x = 0)
         for (int y = 0; y < sandSimulation.gridHeight; y++)
         {
             if (sandSimulation.grid[0, y] > 0)
@@ -62,24 +62,24 @@ public class SandScoring : MonoBehaviour
                     int scoreForThisColor = connectedCells.Count * pointsPerCell;
                     totalScore += scoreForThisColor;
 
-                    // ThÃªm cÃ¡c Ã´ nÃ y vÃ o danh sÃ¡ch tá»•ng Ä‘á»ƒ xÃ³a
+                    // Thêm các ô này vào danh sách tổng để xóa
                     foreach (var cell in connectedCells)
                     {
                         allCellsToRemove.Add(cell);
                     }
 
                     // ================================================================
-                    // == PHáº¦N THÃŠM Má»šI Äá»‚ HIá»‚N THá»Š HIá»†U á»¨NG ÄIá»‚M Sá» ==
+                    // == PHẦN THÊM MỚI ĐỂ HIỂN THỊ HIỆU ỨNG ĐIỂM SỐ ==
                     // ================================================================
                     if (scoreForThisColor > 0)
                     {
-                        // 1. Má»Ÿ UIetaCore thÃ´ng qua UIManager cá»§a báº¡n
+                        // 1. Mở UIetaCore thông qua UIManager của bạn
                         UIetaCore scoreEffectUI = UIManager.Instance.OpenUI<UIetaCore>();
                         
-                        // 2. Kiá»ƒm tra Ä‘á»ƒ cháº¯c cháº¯n UI Ä‘Ã£ Ä‘Æ°á»£c má»Ÿ thÃ nh cÃ´ng
+                        // 2. Kiểm tra để chắc chắn UI đã được mở thành công
                         if (scoreEffectUI != null)
                         {
-                            // 3. Gá»i phÆ°Æ¡ng thá»©c Ä‘á»ƒ hiá»ƒn thá»‹ hiá»‡u á»©ng vá»›i Ä‘iá»ƒm vÃ  mÃ u tÆ°Æ¡ng á»©ng
+                            // 3. Gọi phương thức để hiển thị hiệu ứng với điểm và màu tương ứng
                             scoreEffectUI.ShowScoreEffect(scoreForThisColor, startColor);
                         }
                     }
@@ -108,27 +108,27 @@ public class SandScoring : MonoBehaviour
     }
 
     /// <summary>
-    /// Coroutine phÃ¡t hiá»‡u á»©ng sÃ¡ng lÃªn rá»“i biáº¿n máº¥t
+    /// Coroutine phát hiệu ứng sáng lên rồi biến mất
     /// </summary>
     private IEnumerator PlayClearEffect(HashSet<Vector2Int> cellsToRemove, int score)
     {
         isPlayingEffect = true;
 
-        // LÆ°u mÃ u gá»‘c cá»§a cÃ¡c Ã´
+        // Lưu màu gốc của các ô
         Dictionary<Vector2Int, Color> originalColors = new Dictionary<Vector2Int, Color>();
         foreach (var cell in cellsToRemove)
         {
             originalColors[cell] = sandSimulation.colorGrid[cell.x, cell.y];
         }
 
-        // Phase 1: SÃ¡ng lÃªn
+        // Phase 1: Sáng lên
         foreach (var cell in cellsToRemove)
         {
             Color originalColor = originalColors[cell];
             Color brightColor = originalColor * highlightIntensity;
-            brightColor.a = originalColor.a; // Giá»¯ nguyÃªn alpha
+            brightColor.a = originalColor.a; // Giữ nguyên alpha
 
-            // Tween mÃ u sÃ¡ng lÃªn
+            // Tween màu sáng lên
             DOTween.To(
                 () => sandSimulation.colorGrid[cell.x, cell.y],
                 color => sandSimulation.colorGrid[cell.x, cell.y] = color,
@@ -137,19 +137,19 @@ public class SandScoring : MonoBehaviour
             ).SetEase(Ease.OutQuad);
         }
 
-        // Äá»£i hiá»‡u á»©ng sÃ¡ng lÃªn hoÃ n thÃ nh
+        // Đợi hiệu ứng sáng lên hoàn thành
         yield return new WaitForSeconds(highlightDuration * 0.5f);
 
-        // Phase 2: Giá»¯ sÃ¡ng má»™t chÃºt
+        // Phase 2: Giữ sáng một chút
         yield return new WaitForSeconds(highlightDuration * 0.5f);
 
-        // Phase 3: Fade out vÃ  xÃ³a
+        // Phase 3: Fade out và xóa
         foreach (var cell in cellsToRemove)
         {
             Color currentColor = sandSimulation.colorGrid[cell.x, cell.y];
             Color transparentColor = new Color(currentColor.r, currentColor.g, currentColor.b, 0);
 
-            // Tween biáº¿n máº¥t
+            // Tween biến mất
             DOTween.To(
                 () => sandSimulation.colorGrid[cell.x, cell.y],
                 color => sandSimulation.colorGrid[cell.x, cell.y] = color,
@@ -158,10 +158,10 @@ public class SandScoring : MonoBehaviour
             ).SetEase(Ease.InQuad);
         }
 
-        // Äá»£i hiá»‡u á»©ng biáº¿n máº¥t hoÃ n thÃ nh
+        // Đợi hiệu ứng biến mất hoàn thành
         yield return new WaitForSeconds(fadeOutDuration);
 
-        // XÃ³a cÃ¡c Ã´ khá»i grid
+        // Xóa các ô khỏi grid
         foreach (var cell in cellsToRemove)
         {
             sandSimulation.grid[cell.x, cell.y] = 0;
@@ -171,10 +171,17 @@ public class SandScoring : MonoBehaviour
         Debug.Log($"Cleared {cellsToRemove.Count} cells, Score: {score}");
 
         isPlayingEffect = false;
+        
+        // ================================================================
+        // == QUAN TRỌNG: Kích hoạt simulation sau khi xóa cát ==
+        // ================================================================
+        // Cát phía trên sẽ rơi xuống chỗ trống
+        sandSimulation.TriggerSimulation();
+        // ================================================================
     }
 
     /// <summary>
-    /// TÃ¬m Ä‘Æ°á»ng Ä‘i tá»« má»™t Ä‘iá»ƒm báº¯t Ä‘áº§u Ä‘áº¿n cá»™t cuá»‘i cÃ¹ng bÃªn pháº£i (BFS)
+    /// Tìm đường đi từ một điểm bắt đầu đến cột cuối cùng bên phải (BFS)
     /// </summary>
     private List<Vector2Int> FindPathToRightEdge(Vector2Int start, Color targetColor)
     {
@@ -184,7 +191,7 @@ public class SandScoring : MonoBehaviour
 
         queue.Enqueue(start);
         visited.Add(start);
-        parentMap[start] = new Vector2Int(-1, -1); // ÄÃ¡nh dáº¥u Ä‘iá»ƒm báº¯t Ä‘áº§u
+        parentMap[start] = new Vector2Int(-1, -1); // Đánh dấu điểm bắt đầu
 
         Vector2Int[] directions = GetMovementDirections();
 
@@ -192,21 +199,21 @@ public class SandScoring : MonoBehaviour
         {
             Vector2Int current = queue.Dequeue();
 
-            // Kiá»ƒm tra xem Ä‘Ã£ Ä‘áº¿n cá»™t cuá»‘i cÃ¹ng chÆ°a
+            // Kiểm tra xem đã đến cột cuối cùng chưa
             if (current.x == sandSimulation.gridWidth - 1)
             {
                 return ReconstructPath(parentMap, current);
             }
 
-            // Duyá»‡t qua cÃ¡c Ã´ lÃ¢n cáº­n
+            // Duyệt qua các ô lân cận
             foreach (var direction in directions)
             {
                 Vector2Int next = current + direction;
 
-                // Kiá»ƒm tra Ä‘iá»u kiá»‡n há»£p lá»‡
+                // Kiểm tra điều kiện hợp lệ
                 if (IsValidCell(next) && !visited.Contains(next))
                 {
-                    // Kiá»ƒm tra mÃ u sáº¯c cÃ³ khá»›p khÃ´ng
+                    // Kiểm tra màu sắc có khớp không
                     if (ColorsMatch(sandSimulation.colorGrid[next.x, next.y], targetColor))
                     {
                         visited.Add(next);
@@ -217,11 +224,11 @@ public class SandScoring : MonoBehaviour
             }
         }
 
-        return null; // KhÃ´ng tÃ¬m tháº¥y Ä‘Æ°á»ng Ä‘i
+        return null; // Không tìm thấy đường đi
     }
 
     /// <summary>
-    /// TÃ¡i táº¡o Ä‘Æ°á»ng Ä‘i tá»« parentMap
+    /// Tái tạo đường đi từ parentMap
     /// </summary>
     private List<Vector2Int> ReconstructPath(Dictionary<Vector2Int, Vector2Int> parentMap, Vector2Int end)
     {
@@ -233,14 +240,14 @@ public class SandScoring : MonoBehaviour
             path.Add(current);
             current = parentMap[current];
         }
-        path.Add(current); // ThÃªm Ä‘iá»ƒm báº¯t Ä‘áº§u
+        path.Add(current); // Thêm điểm bắt đầu
 
-        path.Reverse(); // Äáº£o ngÆ°á»£c Ä‘á»ƒ cÃ³ Ä‘Æ°á»ng Ä‘i tá»« Ä‘áº§u Ä‘áº¿n cuá»‘i
+        path.Reverse(); // Đảo ngược để có đường đi từ đầu đến cuối
         return path;
     }
 
     /// <summary>
-    /// Kiá»ƒm tra Ã´ cÃ³ há»£p lá»‡ khÃ´ng
+    /// Kiểm tra ô có hợp lệ không
     /// </summary>
     private bool IsValidCell(Vector2Int cell)
     {
@@ -250,7 +257,7 @@ public class SandScoring : MonoBehaviour
     }
 
     /// <summary>
-    /// TÃ¬m táº¥t cáº£ cÃ¡c háº¡t cÃ¡t cÃ¹ng mÃ u liÃªn káº¿t vá»›i Ä‘Æ°á»ng Ä‘i báº±ng Flood Fill
+    /// Tìm tất cả các hạt cát cùng màu liên kết với đường đi bằng Flood Fill
     /// </summary>
     private HashSet<Vector2Int> FindAllConnectedCells(Color targetColor, List<Vector2Int> initialPath)
     {
@@ -258,7 +265,7 @@ public class SandScoring : MonoBehaviour
         Queue<Vector2Int> queue = new Queue<Vector2Int>();
         HashSet<Vector2Int> visited = new HashSet<Vector2Int>();
 
-        // Báº¯t Ä‘áº§u tá»« táº¥t cáº£ cÃ¡c Ã´ trong Ä‘Æ°á»ng Ä‘i ban Ä‘áº§u
+        // Bắt đầu từ tất cả các ô trong đường đi ban đầu
         foreach (var pathCell in initialPath)
         {
             if (!visited.Contains(pathCell))
@@ -271,20 +278,20 @@ public class SandScoring : MonoBehaviour
 
         Vector2Int[] directions = GetMovementDirections();
 
-        // Flood Fill Ä‘á»ƒ tÃ¬m táº¥t cáº£ háº¡t cÃ¹ng mÃ u liÃªn káº¿t
+        // Flood Fill để tìm tất cả hạt cùng màu liên kết
         while (queue.Count > 0)
         {
             Vector2Int current = queue.Dequeue();
 
-            // Duyá»‡t qua cÃ¡c Ã´ lÃ¢n cáº­n
+            // Duyệt qua các ô lân cận
             foreach (var direction in directions)
             {
                 Vector2Int next = current + direction;
 
-                // Kiá»ƒm tra Ä‘iá»u kiá»‡n há»£p lá»‡
+                // Kiểm tra điều kiện hợp lệ
                 if (IsValidCell(next) && !visited.Contains(next))
                 {
-                    // Kiá»ƒm tra mÃ u sáº¯c cÃ³ khá»›p khÃ´ng
+                    // Kiểm tra màu sắc có khớp không
                     if (ColorsMatch(sandSimulation.colorGrid[next.x, next.y], targetColor))
                     {
                         visited.Add(next);
@@ -299,32 +306,32 @@ public class SandScoring : MonoBehaviour
     }
 
     /// <summary>
-    /// Láº¥y danh sÃ¡ch cÃ¡c hÆ°á»›ng di chuyá»ƒn dá»±a trÃªn cÃ i Ä‘áº·t
+    /// Lấy danh sách các hướng di chuyển dựa trên cài đặt
     /// </summary>
     private Vector2Int[] GetMovementDirections()
     {
         if (allowDiagonalMovement)
         {
-            // 8 hÆ°á»›ng (tháº³ng + chÃ©o)
+            // 8 hướng (thẳng + chéo)
             return new Vector2Int[] {
-                new Vector2Int(0, -1),   // LÃªn
-                new Vector2Int(0, 1),    // Xuá»‘ng
-                new Vector2Int(-1, 0),   // TrÃ¡i
-                new Vector2Int(1, 0),    // Pháº£i
-                new Vector2Int(-1, -1),  // ChÃ©o trÃªn trÃ¡i
-                new Vector2Int(1, -1),   // ChÃ©o trÃªn pháº£i
-                new Vector2Int(-1, 1),   // ChÃ©o dÆ°á»›i trÃ¡i
-                new Vector2Int(1, 1)     // ChÃ©o dÆ°á»›i pháº£i
+                new Vector2Int(0, -1),   // Lên
+                new Vector2Int(0, 1),    // Xuống
+                new Vector2Int(-1, 0),   // Trái
+                new Vector2Int(1, 0),    // Phải
+                new Vector2Int(-1, -1),  // Chéo trên trái
+                new Vector2Int(1, -1),   // Chéo trên phải
+                new Vector2Int(-1, 1),   // Chéo dưới trái
+                new Vector2Int(1, 1)     // Chéo dưới phải
             };
         }
         else
         {
-            // 4 hÆ°á»›ng (chá»‰ tháº³ng)
+            // 4 hướng (chỉ thẳng)
             return new Vector2Int[] {
-                new Vector2Int(0, -1),  // LÃªn
-                new Vector2Int(0, 1),   // Xuá»‘ng
-                new Vector2Int(-1, 0),  // TrÃ¡i
-                new Vector2Int(1, 0)    // Pháº£i
+                new Vector2Int(0, -1),  // Lên
+                new Vector2Int(0, 1),   // Xuống
+                new Vector2Int(-1, 0),  // Trái
+                new Vector2Int(1, 0)    // Phải
             };
         }
     }
@@ -338,8 +345,8 @@ public class SandScoring : MonoBehaviour
     }
 
     /// <summary>
-    /// TÃ¬m táº¥t cáº£ cÃ¡c Ä‘Æ°á»ng Ä‘i cÃ³ thá»ƒ tá»« cá»™t Ä‘áº§u tiÃªn Ä‘áº¿n cá»™t cuá»‘i cÃ¹ng
-    /// CÃ¹ng vá»›i táº¥t cáº£ háº¡t cÃ¹ng mÃ u liÃªn káº¿t
+    /// Tìm tất cả các đường đi có thể từ cột đầu tiên đến cột cuối cùng
+    /// Cùng với tất cả hạt cùng màu liên kết
     /// </summary>
     public List<HashSet<Vector2Int>> FindAllConnectedRegions()
     {
@@ -354,7 +361,7 @@ public class SandScoring : MonoBehaviour
             {
                 Color startColor = sandSimulation.colorGrid[start.x, start.y];
 
-                // TrÃ¡nh xá»­ lÃ½ cÃ¹ng má»™t mÃ u nhiá»u láº§n
+                // Tránh xử lý cùng một màu nhiều lần
                 if (processedColors.Contains(startColor)) continue;
 
                 List<Vector2Int> path = FindPathToRightEdge(start, startColor);
@@ -365,7 +372,7 @@ public class SandScoring : MonoBehaviour
                     HashSet<Vector2Int> connectedRegion = FindAllConnectedCells(startColor, path);
                     allRegions.Add(connectedRegion);
 
-                    // ÄÃ¡nh dáº¥u cÃ¡c Ã´ Ä‘Ã£ xá»­ lÃ½
+                    // Đánh dấu các ô đã xử lý
                     foreach (var cell in connectedRegion)
                     {
                         processedCells.Add(cell);
@@ -376,7 +383,4 @@ public class SandScoring : MonoBehaviour
 
         return allRegions;
     }
-
-    
-    
 }

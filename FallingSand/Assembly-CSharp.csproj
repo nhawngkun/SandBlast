@@ -69,6 +69,7 @@
     <Compile Include="Assets\Scenes\Game\Script\GamePlay\UI\UIgameplay.cs" />
     <Compile Include="Assets\Scenes\Game\Script\SandSimulation.cs" />
     <Compile Include="Assets\Scenes\Game\Script\GamePlay\UI\UICore.cs" />
+    <Compile Include="Assets\Scenes\Game\Script\GamePlay\Manager\SC_FPSCounter.cs" />
     <Compile Include="Assets\Scenes\Game\Script\BlockVisualizer.cs" />
     <Compile Include="Assets\Scenes\Game\Script\GamePlay\Manager\SoundManager.cs" />
     <Compile Include="Assets\Scenes\Game\Script\GamePlay\UI\UILoss.cs" />
